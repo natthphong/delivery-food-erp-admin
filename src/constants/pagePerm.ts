@@ -6,14 +6,14 @@ export const PAGE_PERMS = {
       { object: "DASH_BROAD_BRANCH", action: "LIST" },
     ],
   },
-  ORDERS: {
+  ORDER: {
     anyOf: [
       { object: "ORDER_ALL", action: "LIST" },
       { object: "ORDER_COMPANY", action: "LIST" },
       { object: "ORDER_BRANCH", action: "LIST" },
     ],
   },
-  BRANCHES: {
+  BRANCH: {
     anyOf: [
       { object: "BRANCH_ALL", action: "LIST" },
       { object: "BRANCH_COMPANY", action: "LIST" },

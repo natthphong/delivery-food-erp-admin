@@ -13,8 +13,8 @@ type ConsoleLayoutProps = {
 
 const NAV_ITEMS = [
   { key: "dashboard" as const, label: "Dashboard", href: "/console/dashboard", perms: PAGE_PERMS.DASHBOARD.anyOf },
-  { key: "orders" as const, label: "Orders", href: "/console/orders", perms: PAGE_PERMS.ORDERS.anyOf },
-  { key: "branches" as const, label: "Branches", href: "/console/branch", perms: PAGE_PERMS.BRANCHES.anyOf },
+  { key: "orders" as const, label: "Orders", href: "/console/orders", perms: PAGE_PERMS.ORDER.anyOf },
+  { key: "branches" as const, label: "Branches", href: "/console/branch", perms: PAGE_PERMS.BRANCH.anyOf },
   { key: "users" as const, label: "Users", href: "/console/users", perms: PAGE_PERMS.USERS.anyOf },
 ];
 

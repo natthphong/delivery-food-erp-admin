@@ -1,12 +1,12 @@
 import { useAppSelector } from "@/store";
 
 export function useCan() {
-  const permissions = useAppSelector((state) => state.auth.permissions) || [];
+  const perms = useAppSelector((s) => s.auth.permissions) || [];
   return (objectCode: string, action: string) =>
-    permissions.some((item) => item.object_code === objectCode && item.action_code.includes(action));
+    !!perms.find((p: any) => p.object_code === objectCode && p.action_code?.includes(action));
 }
 
-export function useGate(requirements: { object: string; action: string }[]) {
+export function useGate(anyOf: { object: string; action: string }[]) {
   const can = useCan();
-  return requirements.some((req) => can(req.object, req.action));
+  return anyOf.some((x) => can(x.object, x.action));
 }
