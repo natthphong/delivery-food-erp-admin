@@ -11,10 +11,12 @@ if (!JWT_SECRET) {
 }
 
 export type JwtAdminPayload = {
+  uid?: string;
+  userId?: number;
   sub: string;
   email: string;
-  username:string;
-  roles: string[];
+  username: string;
+  roles: number[];
 };
 
 export type RefreshSession = JwtAdminPayload & {
@@ -33,8 +35,15 @@ export const verifyAccessToken = (token: string): JwtAdminPayload => {
   if (typeof decoded === "string") {
     throw new Error("Invalid token payload");
   }
-  const { sub, email, roles } = decoded as JwtAdminPayload;
-  return { sub, email, roles };
+  const { sub, email, username, roles, uid, userId } = decoded as JwtAdminPayload;
+  return {
+    sub,
+    email,
+    username,
+    roles,
+    uid,
+    userId,
+  };
 };
 
 const createRefreshToken = (payload: JwtAdminPayload): RefreshSession => {
@@ -71,8 +80,8 @@ export const rotateRefreshToken = (token: string): RefreshSession | null => {
   }
 
   refreshRegistry.delete(token);
-  const { sub, email, roles } = session;
-  const replacement = createRefreshToken({ sub, email, roles });
+  const { sub, email, username, roles, uid, userId } = session;
+  const replacement = createRefreshToken({ sub, email, username, roles, uid, userId });
   refreshRegistry.set(replacement.token, replacement);
   return replacement;
 };

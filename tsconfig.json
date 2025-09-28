@@ -21,8 +21,11 @@
     ],
     "paths": {
       "@/components/*": ["src/components/*"],
+      "@/constants/*": ["src/constants/*"],
+      "@/repository/*": ["src/repository/*"],
       "@/store": ["src/store/index"],
       "@/store/*": ["src/store/*"],
+      "@/types/*": ["src/types/*"],
       "@/utils/*": ["src/utils/*"],
       "@/styles/*": ["src/styles/*"],
       "@/pages/*": ["src/pages/*"]
