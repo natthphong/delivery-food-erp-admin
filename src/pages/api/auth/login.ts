@@ -54,16 +54,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const roleIds = [lastRoleId];
 
-    const [{ data: roles, error: rolesError }, { data: permissionRows, error: permissionsError }] = await Promise.all([
+    const [{ data: roles, error: rolesError }, permissionRows] = await Promise.all([
       getRolesByIds(roleIds),
       getPermissionsForRoles(roleIds),
     ]);
 
-    if (rolesError || permissionsError) {
-      logger.error("Failed to resolve roles or permissions", { rolesError, permissionsError });
+    if (rolesError) {
+      logger.error("Failed to resolve roles or permissions", { rolesError });
       return res.status(500).json({ code: "INTERNAL_ERROR", message: "Unexpected error" });
     }
-
     const permissions = aggregatePermissions(permissionRows ?? []);
     const payload: JwtAdminPayload = {
       sub: employee.id,
@@ -82,7 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         id: employee.id,
         email: employee.email,
         username: employee.username,
-        roles: (roles ?? []).map((role) => ({ id: role.id, code: role.code, name: role.name })),
+        roles: (roles ?? []).map((role) => ({ id: role.id, code: role.role_code, name: role.name_th })),
         permissions,
       },
     };

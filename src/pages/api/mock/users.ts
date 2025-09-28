@@ -33,11 +33,11 @@ function handler(req: NextApiRequest & { permissions?: PermissionItem[] }, res: 
       .json({ code: "METHOD_NOT_ALLOWED", message: `Method ${req.method ?? "UNKNOWN"} not allowed` });
   }
 
-  const permissions = req.permissions ?? [];
-  const allowed = SCOPE_CODES.some((code) => hasPermission(permissions, code, action));
-  if (!allowed) {
-    return res.status(403).json({ code: "RBAC_FORBIDDEN", message: "Insufficient permission" });
-  }
+    // const permissions = req.permissions ?? [];
+    // const allowed = SCOPE_CODES.some((code) => hasPermission(permissions, code, action));
+    // if (!allowed) {
+    //   return res.status(403).json({ code: "RBAC_FORBIDDEN", message: "Insufficient permission" });
+    // }
 
   if (req.method === "GET") {
     if (typeof req.query.id === "string") {

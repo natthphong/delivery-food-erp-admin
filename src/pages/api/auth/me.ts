@@ -4,6 +4,7 @@ import { supabaseErp } from "@/utils/supabaseErp";
 import { getPermissionsForRoles, getRolesByIds, pickLastRoleId } from "@/repository/authRepo";
 import { aggregatePermissions } from "@/utils/authz";
 import type { AdminProfile, ApiErr, ApiOk } from "@/types/auth";
+import {logger} from "@/utils/logger";
 
 export type MeResponse = ApiOk<AdminProfile> | ApiErr;
 
@@ -41,15 +42,15 @@ async function handler(req: AuthedRequest, res: NextApiResponse<MeResponse>) {
 
   const roleIds = [lastRoleId];
 
-  const [{ data: roles, error: rolesError }, { data: permissionsRows, error: permissionsError }] = await Promise.all([
+  const [{ data: roles, error: rolesError }, permissionsRows] = await Promise.all([
     getRolesByIds(roleIds),
     getPermissionsForRoles(roleIds),
   ]);
 
-  if (rolesError || permissionsError) {
-    return res.status(500).json({ code: "INTERNAL_ERROR", message: "Failed to load permissions" });
+  if (rolesError) {
+    logger.error("Failed to resolve roles or permissions", { rolesError });
+    return res.status(500).json({ code: "INTERNAL_ERROR", message: "Unexpected error" });
   }
-
   const permissions = aggregatePermissions(permissionsRows ?? []);
 
   const body: AdminProfile = {
@@ -57,7 +58,7 @@ async function handler(req: AuthedRequest, res: NextApiResponse<MeResponse>) {
     email: employee.email,
     username: employee.username,
     is_active: employee.is_active,
-    roles: (roles ?? []).map((role) => ({ id: role.id, code: role.code, name: role.name })),
+    roles: (roles ?? []).map((role) => ({ id: role.id, code: role.role_code, name: role.name_th })),
     permissions,
   };
 

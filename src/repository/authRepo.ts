@@ -33,12 +33,21 @@ export async function getLatestRoleIds(employeeId: string): Promise<number[] | n
 }
 
 export async function getRolesByIds(roleIds: number[]) {
-  return supabaseErp.from("tbl_role").select("id,code,name").in("id", roleIds);
+  return supabaseErp.from("tbl_role").select("id,role_code,name_th,name_en").in("id", roleIds);
 }
 
+type Permission = { object_code: string; action_code: string };
+type Row = { role_id: number; object_code: string; action_code: string };
+
 export async function getPermissionsForRoles(roleIds: number[]) {
-  return supabaseErp
-    .from("role_permission")
-    .select("permission:tbl_permission(object_code,action_code)")
-    .in("role_id", roleIds);
+  const { data, error } = await supabaseErp
+      .from('v_role_permissions')
+      .select('role_id, object_code, action_code')
+      .in('role_id', roleIds);
+  if (error) throw error;
+  return (data as Row[]).map(r => ({
+    role_id: r.role_id,
+    permission: { object_code: r.object_code, action_code: r.action_code } as Permission,
+  }));
 }
+
