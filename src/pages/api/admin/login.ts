@@ -41,9 +41,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<LoginResponse |
       .eq("email", email.toLowerCase())
       .maybeSingle();
 
-    const {roleData} = await supabaseErp
-        .from("tbl_employee_role_history")
-        .select("id,role_id")
 
     if (!data) {
       res.status(401).json({ error: "Invalid credentials" });
