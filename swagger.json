@@ -1,0 +1,186 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Baan Console API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "Admin login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeLogin" }
+              }
+            }
+          },
+          "405": { "description": "Method not allowed" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Current admin profile",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeAdmin" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/mock/dashboard": {
+      "get": {
+        "summary": "Mock dashboard data (permission-guarded)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeAny" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EnvelopeLogin": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkLogin" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeAdmin": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkAdmin" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeAny": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiErr" },
+          {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "body": {}
+            },
+            "required": ["code", "message", "body"]
+          }
+        ]
+      },
+      "ApiOkLogin": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/LoginBody" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkAdmin": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/AdminProfile" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiErr": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" }
+        },
+        "required": ["code", "message"]
+      },
+      "PermissionItem": {
+        "type": "object",
+        "properties": {
+          "object_code": { "type": "string" },
+          "action_code": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["object_code", "action_code"]
+      },
+      "AdminRole": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "code": { "type": "string" },
+          "name": { "type": "string" }
+        },
+        "required": ["id", "code", "name"]
+      },
+      "AdminProfile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "email": { "type": "string" },
+          "username": { "type": "string" },
+          "is_active": { "type": "boolean" },
+          "roles": { "type": "array", "items": { "$ref": "#/components/schemas/AdminRole" } },
+          "permissions": { "type": "array", "items": { "$ref": "#/components/schemas/PermissionItem" } }
+        },
+        "required": ["id", "email", "username", "is_active", "roles", "permissions"]
+      },
+      "LoginBody": {
+        "type": "object",
+        "properties": {
+          "accessToken": { "type": "string" },
+          "refreshToken": { "type": "string" },
+          "admin": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "email": { "type": "string" },
+              "username": { "type": "string" },
+              "roles": { "type": "array", "items": { "$ref": "#/components/schemas/AdminRole" } },
+              "permissions": { "type": "array", "items": { "$ref": "#/components/schemas/PermissionItem" } }
+            },
+            "required": ["id", "email", "username", "roles", "permissions"]
+          }
+        },
+        "required": ["accessToken", "refreshToken", "admin"]
+      }
+    }
+  }
+}

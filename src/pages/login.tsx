@@ -1,16 +1,11 @@
 import { FormEvent, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import apiClient from "@/utils/apiClient";
 import { useAppDispatch } from "@/store";
-import { setAdmin, setTokens, type AdminSession } from "@/store/authSlice";
-import { saveAuth } from "@/utils/authStorage";
+import { setAuth } from "@/store/authSlice";
+import type { ApiErr, ApiOk, LoginOkBody } from "@/types/auth";
 
-type LoginApiResponse = {
-  accessToken: string;
-  refreshToken: string;
-  admin: AdminSession;
-};
+type LoginEnvelope = (ApiOk<LoginOkBody> | ApiErr) & Partial<{ body: LoginOkBody }>;
 
 const LoginPage = () => {
   const dispatch = useAppDispatch();
@@ -22,19 +17,43 @@ const LoginPage = () => {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
     setSubmitting(true);
+    setError(null);
 
     try {
-      const { data } = await apiClient.post<LoginApiResponse>("/api/admin/login", { email, password });
-      dispatch(setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken }));
-      dispatch(setAdmin(data.admin));
-      saveAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, admin: data.admin });
-      void router.replace("/");
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const payload = (await response.json()) as LoginEnvelope;
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "Unable to sign in");
+      }
+
+      if (payload.code !== "OK" || !payload.body) {
+        setError(payload.message ?? "Unable to sign in with those credentials");
+        return;
+      }
+
+      dispatch(
+        setAuth({
+          accessToken: payload.body.accessToken,
+          refreshToken: payload.body.refreshToken,
+          admin: {
+            id: payload.body.admin.id,
+            email: payload.body.admin.email,
+            username: payload.body.admin.username,
+            roles: payload.body.admin.roles,
+            permissions: payload.body.admin.permissions,
+          },
+        })
+      );
+
+      await router.replace("/console/dashboard");
     } catch (err) {
-      const message =
-        (err as { response?: { data?: { error?: string } } }).response?.data?.error ?? "Unable to sign in with those credentials";
-      setError(message);
+      setError((err as Error).message || "Unable to sign in with those credentials");
     } finally {
       setSubmitting(false);
     }
@@ -112,5 +131,7 @@ const LoginPage = () => {
     </>
   );
 };
+
+(LoginPage as any).requireAuth = false;
 
 export default LoginPage;
