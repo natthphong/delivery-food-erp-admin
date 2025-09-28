@@ -9,12 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.2.7",
+    "@supabase/supabase-js": "^2.48.1",
     "axios": "^1.7.7",
-    "framer-motion": "^12.23.12",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
     "next": "15.0.3",
     "react": "19.0.0-rc-66855b96-20241106",
     "react-dom": "19.0.0-rc-66855b96-20241106",
-    "react-syntax-highlighter": "^15.6.6"
+    "react-redux": "^9.1.2"
   },
   "devDependencies": {
     "@types/node": "^20.17.7",

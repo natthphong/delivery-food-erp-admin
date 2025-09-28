@@ -1,38 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Baan Admin Console
 
-## Getting Started
+Modern admin console for BaanFoodie and ERP operations. Built with Next.js 15 (Pages Router), TypeScript, TailwindCSS, and Redux Toolkit.
 
-First, run the development server:
+## Quickstart
 
 ```bash
+npm install
+cp .env.local.example .env.local # fill with project secrets
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-Use `npm run dev` and open `/convert` (Pages Router) and `/` (App Router) to verify Tailwind styles.
+### Required environment variables (`.env.local`)
 
+```
+NEXT_PUBLIC_ADMIN_JWT_SECRET=replace_with_long_random_value
+NEXT_PUBLIC_ADMIN_JWT_EXPIRES_IN=900
+NEXT_PUBLIC_ADMIN_REFRESH_EXPIRES_IN=604800
+NEXT_PUBLIC_SUPABASE_ERP_URL=https://erp-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ERP_SERVICE_KEY=erp_service_role_key
+NEXT_PUBLIC_SUPABASE_BAAN_URL=https://baan-project.supabase.co
+NEXT_PUBLIC_SUPABASE_BAAN_SERVICE_KEY=baan_service_role_key
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Email/password admin login with bcrypt verification against Supabase ERP
+- JWT access + refresh tokens with in-memory refresh registry
+- Axios client with automatic token refresh and request replay
+- Redux Toolkit store with auth slice persisted to `localStorage`
+- Protected dashboard that queries `/api/admin/me` and shows admin profile
+- Supabase service clients for ERP and BaanFoodie (server-side only)
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` – start the development server
+- `npm run build` – build for production
+- `npm run start` – run the production build
+- `npm run lint` – run Next.js lint checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Folder structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── pages/
+│   ├── _app.tsx
+│   ├── index.tsx
+│   ├── login.tsx
+│   └── api/admin/*.ts
+├── store/
+├── styles/
+└── utils/
+```
 
-## Deploy on Vercel
+## Notes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Refresh tokens are stored in-memory only; restart the server to invalidate all sessions.
+- Supabase service keys are accessed exclusively on the server through API routes.
