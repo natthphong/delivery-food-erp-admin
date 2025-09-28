@@ -1,6 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import bcrypt from "bcryptjs";
-import { findEmployeeByEmail, getLatestRoleIds, getPermissionsForRoles, getRolesByIds } from "@/repository/authRepo";
+import {
+  findEmployeeByEmail,
+  getPermissionsForRoles,
+  getRolesByIds,
+  pickLastRoleId,
+} from "@/repository/authRepo";
 import { issueRefreshToken, signAccessToken, type JwtAdminPayload } from "@/utils/jwt";
 import { aggregatePermissions } from "@/utils/authz";
 import type { ApiErr, ApiOk, LoginOkBody } from "@/types/auth";
@@ -42,10 +47,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(200).json({ code: "INVALID_CREDENTIALS", message: "Invalid credentials" });
     }
 
-    const roleIds = await getLatestRoleIds(employee.id);
-    if (!roleIds || roleIds.length === 0) {
+    const lastRoleId = pickLastRoleId(employee.role_history);
+    if (!lastRoleId) {
       return res.status(200).json({ code: "NO_ROLE", message: "No role assigned for this website" });
     }
+
+    const roleIds = [lastRoleId];
 
     const [{ data: roles, error: rolesError }, { data: permissionRows, error: permissionsError }] = await Promise.all([
       getRolesByIds(roleIds),

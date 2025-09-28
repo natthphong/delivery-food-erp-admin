@@ -572,10 +572,12 @@ You are generating a **Next.js 15 + TypeScript + Tailwind** Admin Console called
 
 | Path | Method | Notes |
 | --- | --- | --- |
-| `/api/auth/login` | `POST` | Email + password via Supabase ERP. Validates bcrypt hash, checks `is_active`, resolves latest `tbl_role_history` snapshot. On success issues JWT access + opaque refresh token and returns the admin profile plus unioned permissions. |
+| `/api/auth/login` | `POST` | Email + password via Supabase ERP. Validates bcrypt hash, checks `is_active`, pulls `role_history :: integer[]` from the employee record, and picks the **last role id**. On success issues JWT access + opaque refresh token and returns the admin profile plus unioned permissions. |
 | `/api/auth/me` | `GET` | Guarded by `withAuth`. Accepts either `Authorization: Bearer <access>` or Firebase `x-id-token`/`idToken` header. Re-hydrates admin profile + permissions from Supabase. |
 
 Shared helpers live in `src/repository/authRepo.ts` and `src/utils/authz.ts`. Middleware pipeline: `withAuth` → `withPermissions` → optional `withPermission`.
+
+**Role resolution:** `tbl_employee.role_history` stores the historical integer role ids. The system takes the last element of this array as the current role. Empty / missing arrays respond with `NO_ROLE`.
 
 ### Permission catalogue
 

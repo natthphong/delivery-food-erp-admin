@@ -1,5 +1,5 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
-import { getLatestRoleIds, getPermissionsForRoles } from "@/repository/authRepo";
+import { getLastRoleIdForEmployee, getPermissionsForRoles } from "@/repository/authRepo";
 import { aggregatePermissions } from "@/utils/authz";
 import type { PermissionItem } from "@/types/auth";
 
@@ -12,12 +12,12 @@ export function withPermissions(handler: NextApiHandler) {
     }
 
     try {
-      const roleIds = await getLatestRoleIds(sub);
-      if (!roleIds || !roleIds.length) {
+      const lastRoleId = await getLastRoleIdForEmployee(sub);
+      if (!lastRoleId) {
         return res.status(200).json({ code: "NO_ROLE", message: "No role assigned" });
       }
 
-      const { data, error } = await getPermissionsForRoles(roleIds);
+      const { data, error } = await getPermissionsForRoles([lastRoleId]);
       if (error) {
         return res.status(500).json({ code: "INTERNAL_ERROR", message: "Failed to load permissions" });
       }

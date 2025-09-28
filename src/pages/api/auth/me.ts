@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withAuth } from "@/pages/api/_middleware/withAuth";
 import { supabaseErp } from "@/utils/supabaseErp";
-import { getLatestRoleIds, getPermissionsForRoles, getRolesByIds } from "@/repository/authRepo";
+import { getPermissionsForRoles, getRolesByIds, pickLastRoleId } from "@/repository/authRepo";
 import { aggregatePermissions } from "@/utils/authz";
 import type { AdminProfile, ApiErr, ApiOk } from "@/types/auth";
 
@@ -18,7 +18,7 @@ async function handler(req: AuthedRequest, res: NextApiResponse<MeResponse>) {
 
   const { data: employee, error: employeeError } = await supabaseErp
     .from("tbl_employee")
-    .select("id,email,username,is_active")
+    .select("id,email,username,is_active,role_history")
     .eq("id", employeeId)
     .maybeSingle();
 
@@ -34,10 +34,12 @@ async function handler(req: AuthedRequest, res: NextApiResponse<MeResponse>) {
     return res.status(200).json({ code: "USER_INACTIVE", message: "User is not active" });
   }
 
-  const roleIds = await getLatestRoleIds(employee.id);
-  if (!roleIds || roleIds.length === 0) {
+  const lastRoleId = pickLastRoleId(employee.role_history);
+  if (!lastRoleId) {
     return res.status(200).json({ code: "NO_ROLE", message: "No role assigned for this website" });
   }
+
+  const roleIds = [lastRoleId];
 
   const [{ data: roles, error: rolesError }, { data: permissionsRows, error: permissionsError }] = await Promise.all([
     getRolesByIds(roleIds),

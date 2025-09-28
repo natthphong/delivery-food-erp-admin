@@ -8,6 +8,7 @@
     "/api/auth/login": {
       "post": {
         "summary": "Admin login",
+        "description": "Resolves the current role from tbl_employee.role_history (integer array) by taking the last id.",
         "requestBody": {
           "required": true,
           "content": {
@@ -40,6 +41,7 @@
     "/api/auth/me": {
       "get": {
         "summary": "Current admin profile",
+        "description": "Requires a valid access token. Current role is the last id inside tbl_employee.role_history (integer array).",
         "parameters": [
           {
             "name": "Authorization",
