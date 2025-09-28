@@ -549,3 +549,64 @@ You are generating a **Next.js 15 + TypeScript + Tailwind** Admin Console called
 
   * On dashboard mount, GET `/api/admin/me`; show email + roles; handle 401 with logout
 
+
+---
+
+## 6) Admin auth & RBAC refresh (2025-09)
+
+### HTTP & envelope policy
+
+* **Business codes** – every successful handler returns `{ code, message, body }`. Errors that still represent business outcomes (validation, inactive user, no roles) respond with `200` and the appropriate `code`:
+  * `OK`
+  * `INVALID_CREDENTIALS`
+  * `USER_INACTIVE`
+  * `NO_ROLE`
+  * `VALIDATION_FAILED`
+  * `RBAC_FORBIDDEN`
+  * `UNAUTHORIZED`
+  * `INTERNAL_ERROR`
+* **HTTP status** – reserve `401`, `403`, `405`, and `500` for auth/method/server failures. Everything else uses `200` + business code.
+* **Timezone** – convert timestamps to `Asia/Bangkok` before returning to clients (see `utils/time.ts`).
+
+### Auth endpoints
+
+| Path | Method | Notes |
+| --- | --- | --- |
+| `/api/auth/login` | `POST` | Email + password via Supabase ERP. Validates bcrypt hash, checks `is_active`, pulls `role_history :: integer[]` from the employee record, and picks the **last role id**. On success issues JWT access + opaque refresh token and returns the admin profile plus unioned permissions. |
+| `/api/auth/me` | `GET` | Guarded by `withAuth`. Accepts either `Authorization: Bearer <access>` or Firebase `x-id-token`/`idToken` header. Re-hydrates admin profile + permissions from Supabase. |
+
+Shared helpers live in `src/repository/authRepo.ts` and `src/utils/authz.ts`. Middleware pipeline: `withAuth` → `withPermissions` → optional `withPermission`.
+
+**Role resolution:** `tbl_employee.role_history` stores the historical integer role ids. The system takes the last element of this array as the current role. Empty / missing arrays respond with `NO_ROLE`.
+
+### Permission catalogue
+
+Permissions are aggregated per `object_code` with a sorted array of `action_code`. Current objects/actions:
+
+| Object | Actions |
+| --- | --- |
+| `DASH_BROAD_ALL`, `DASH_BROAD_COMPANY`, `DASH_BROAD_BRANCH` | `LIST` |
+| `ORDER_ALL`, `ORDER_COMPANY`, `ORDER_BRANCH` | `LIST`, `GET`, `UPDATE`, `DELETE` |
+| `BRANCH_ALL`, `BRANCH_COMPANY`, `BRANCH_BRANCH` | `LIST`, `GET`, `UPDATE`, `DELETE` |
+| `USERS_ALL`, `USERS_COMPANY`, `USERS_BRANCH` | `LIST`, `GET`, `UPDATE`, `DELETE` |
+
+### Mock APIs (permission-gated)
+
+All routes sit under `/api/mock/*` and pipe through `withAuth` + `withPermissions`:
+
+* `/api/mock/dashboard` → inspects `DASH_BROAD_*` permissions and returns scoped mock totals.
+* `/api/mock/orders` → honours `ORDER_*` actions. `GET ?id=` requires `GET`, collection lists need `LIST`, updates map to `UPDATE`, delete to `DELETE`.
+* `/api/mock/branch` → checks `BRANCH_*` equivalents.
+* `/api/mock/users` → checks `USERS_*` equivalents.
+
+### Frontend gating & persistence
+
+* Redux slice (`src/store/authSlice.ts`) persists `{ accessToken, refreshToken, user, permissions }` to `localStorage` (`baanconsole.auth.v1`).
+* `RequireAuth` wraps every protected page, bootstraps `/api/auth/me`, and stores the profile through `setMe`.
+* Client helpers (`useCan`, `useGate`) read permissions from Redux to hide navigation links and guard page bodies.
+* Console shell (`src/components/ConsoleLayout.tsx`) only renders navigation items that pass the permission check.
+* Page-level constants live in `src/constants/pagePerm.ts`.
+
+### Swagger
+
+See `swagger.json` for the canonical schema additions to `/api/auth/login`, `/api/auth/me`, and the dashboard mock endpoint.
