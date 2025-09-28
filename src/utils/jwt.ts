@@ -13,6 +13,7 @@ if (!JWT_SECRET) {
 export type JwtAdminPayload = {
   sub: string;
   email: string;
+  username:string;
   roles: string[];
 };
 

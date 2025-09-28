@@ -169,15 +169,96 @@ NEXT_PUBLIC_SUPABASE_BAAN_SERVICE_KEY=baan_service_role_key
 Create a table (in **Supabase ERP**) to store admins:
 
 ```sql
-create table if not exists admin_user (
-  id bigserial primary key,
-  email text unique not null,
-  password_hash text not null,
-  name text,
-  roles text[] default '{}',
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
+create table tbl_employee
+(
+    id                   serial
+        primary key,
+    company_code         varchar(64)                            not null,
+    default_branch_code  varchar(64),
+    first_name_th        varchar(128)                           not null,
+    last_name_th         varchar(128)                           not null,
+    first_name_en        varchar(128),
+    last_name_en         varchar(128),
+    email                varchar(128),
+    phone                varchar(64),
+    employment_type_code varchar(64)                            not null,
+    username             varchar(128)                           not null,
+    password_hash        varchar(255)                           not null,
+    profile_photo_key    varchar(255),
+    face_template_key    varchar(255),
+    signature_image_key  varchar(255),
+    base_salary          numeric(12, 2),
+    base_hourly_rate     numeric(12, 2),
+    currency_code        varchar(3)               default 'THB'::character varying,
+    hire_date            date,
+    end_date             date,
+    is_active            varchar(1)               default 'Y'::character varying,
+    is_deleted           varchar(1)               default 'N'::character varying,
+    created_at           timestamp with time zone default now() not null,
+    created_by           integer,
+    updated_at           timestamp with time zone default now(),
+    updated_by           integer,
+    status               varchar(50)              default 'GUEST'::character varying,
+    face_verify_at       timestamp with time zone,
+    role_history integer[]
+    unique (company_code, username, is_deleted)
 );
+
+
+create table tbl_role
+(
+    id           serial
+        primary key,
+    company_code varchar(64)                                             not null,
+    role_code    varchar(64)                                             not null,
+    name_th      varchar(255)                                            not null,
+    name_en      varchar(255)                                            not null,
+    level_rank   integer                                                 not null,
+    is_active    varchar(1)               default 'Y'::character varying not null,
+    is_deleted   varchar(1)               default 'N'::character varying not null,
+    created_at   timestamp with time zone default now()                  not null,
+    created_by   integer,
+    updated_at   timestamp with time zone default now()                  not null,
+    updated_by   integer,
+    unique (company_code, role_code, is_deleted)
+);
+
+
+
+create table tbl_role_permission
+(
+    id            serial
+        primary key,
+    role_id       integer                                                 not null,
+    permission_id integer                                                 not null,
+    allowed       varchar(1)               default 'Y'::character varying not null,
+    is_deleted    varchar(1)               default 'N'::character varying not null,
+    created_at    timestamp with time zone default now()                  not null,
+    created_by    integer,
+    updated_at    timestamp with time zone default now()                  not null,
+    updated_by    integer,
+    unique (role_id, permission_id, is_deleted)
+);
+
+
+
+create table tbl_permission
+(
+    id          serial
+        primary key,
+
+    object_code varchar(128)                                            not null, --API_REGISTER
+    action_code varchar(64)                                             not null, --CREATE
+    description varchar(255),
+    is_deleted  varchar(1)               default 'N'::character varying not null,
+    created_at  timestamp with time zone default now()                  not null,
+    created_by  integer,
+    updated_at  timestamp with time zone default now()                  not null,
+    updated_by  integer,
+    unique (object_code, action_code, is_deleted)
+);
+
+
 ```
 
 > v0: seed a single admin; hashing can be `bcryptjs`.

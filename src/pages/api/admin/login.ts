@@ -4,12 +4,7 @@ import { supabaseErp } from "@/utils/supabaseErp";
 import { issueRefreshToken, signAccessToken, type JwtAdminPayload } from "@/utils/jwt";
 import { logger } from "@/utils/logger";
 
-type AdminRow = {
-  id: string;
-  email: string;
-  password_hash: string;
-  roles: string[] | null;
-};
+
 
 type LoginResponse = {
   accessToken: string;
@@ -40,17 +35,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<LoginResponse |
   }
 
   try {
-    const { data, error } = await supabaseErp
-      .from<AdminRow>("admin_user")
-      .select("id,email,password_hash,roles")
+    const { data } = await supabaseErp
+      .from("tbl_employee")
+      .select("id,email,password_hash,username,is_active")
       .eq("email", email.toLowerCase())
       .maybeSingle();
 
-    if (error) {
-      logger.error("Failed to query admin_user", error);
-      res.status(500).json({ error: "Unable to verify admin credentials" });
-      return;
-    }
+    const {roleData} = await supabaseErp
+        .from("tbl_employee_role_history")
+        .select("id,role_id")
 
     if (!data) {
       res.status(401).json({ error: "Invalid credentials" });
@@ -66,7 +59,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<LoginResponse |
     const payload: JwtAdminPayload = {
       sub: data.id,
       email: data.email,
-      roles: Array.isArray(data.roles) ? data.roles : [],
+      username: data.username,
+      roles: [],
     };
 
     const accessToken = signAccessToken(payload);
