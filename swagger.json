@@ -63,20 +63,394 @@
         }
       }
     },
-    "/api/mock/dashboard": {
+    "/api/mock/dashboard/summary": {
       "get": {
-        "summary": "Mock dashboard data (permission-guarded)",
+        "summary": "Dashboard summary",
+        "description": "Returns aggregated sales/revenue data for the selected scope. Requires DASH_BROAD_*:LIST permission. All timestamps are normalised to Asia/Bangkok (UTC+7).",
+        "parameters": [
+          { "name": "scope", "in": "query", "schema": { "type": "string", "enum": ["ALL", "COMPANY", "BRANCH"] }, "required": false },
+          { "name": "companyId", "in": "query", "schema": { "type": "integer" }, "required": false },
+          { "name": "branchId", "in": "query", "schema": { "type": "integer" }, "required": false },
+          { "name": "chart", "in": "query", "schema": { "type": "string", "enum": ["pie", "bar"] }, "required": false }
+        ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Business outcome",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/EnvelopeAny" }
+                "schema": { "$ref": "#/components/schemas/EnvelopeDashboardSummary" }
               }
             }
           },
           "401": { "description": "Unauthorized" },
-          "403": { "description": "Forbidden" }
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/dashboard/live": {
+      "get": {
+        "summary": "Dashboard live transactions",
+        "description": "Returns the last 20 synthetic live transactions filtered by scope. Requires DASH_BROAD_*:LIST.",
+        "parameters": [
+          { "name": "scope", "in": "query", "schema": { "type": "string", "enum": ["ALL", "COMPANY", "BRANCH"] }, "required": false },
+          { "name": "companyId", "in": "query", "schema": { "type": "integer" }, "required": false },
+          { "name": "branchId", "in": "query", "schema": { "type": "integer" }, "required": false }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeDashboardLive" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/orders": {
+      "get": {
+        "summary": "Orders list",
+        "description": "Lists mock orders from the key-value store. Optional filters: status, companyId, branchId. Requires ORDER_*:LIST.",
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string" }, "required": false },
+          { "name": "companyId", "in": "query", "schema": { "type": "integer" }, "required": false },
+          { "name": "branchId", "in": "query", "schema": { "type": "integer" }, "required": false }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeOrdersList" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/orders/{id}": {
+      "get": {
+        "summary": "Order detail",
+        "description": "Returns a single order by id. Requires ORDER_*:GET.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeOrderDetail" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/orders/{id}/confirm": {
+      "post": {
+        "summary": "Confirm order",
+        "description": "Sets the order status to CONFIRMED. Requires ORDER_*:UPDATE.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeOrderMutation" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/orders/{id}/reject": {
+      "post": {
+        "summary": "Reject order",
+        "description": "Sets the order status to REJECTED. Requires ORDER_*:UPDATE.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeOrderMutation" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/branch/{branchId}": {
+      "get": {
+        "summary": "Branch detail",
+        "description": "Returns branch metadata and menu configuration. Requires BRANCH_*:GET. Branch-only roles are restricted to id=1.",
+        "parameters": [
+          { "name": "branchId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeBranchDetail" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/branch/{branchId}/toggle": {
+      "post": {
+        "summary": "Toggle branch open state",
+        "description": "Flips branch.is_force_closed. Requires BRANCH_*:UPDATE.",
+        "parameters": [
+          { "name": "branchId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeBranchToggle" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/branch/{branchId}/open-hours": {
+      "post": {
+        "summary": "Update branch open hours",
+        "description": "Replaces branch.open_hours with the provided JSON. Requires BRANCH_*:UPDATE.",
+        "parameters": [
+          { "name": "branchId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "open_hours": { "type": "object" }
+                },
+                "required": ["open_hours"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeBranchOpenHours" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/branch/{branchId}/menu/{productId}/toggle": {
+      "post": {
+        "summary": "Toggle menu item",
+        "description": "Flips menu.is_enabled. Requires BRANCH_*:UPDATE.",
+        "parameters": [
+          { "name": "branchId", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "productId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeMenuToggle" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/branch/{branchId}/menu/{productId}/stock": {
+      "post": {
+        "summary": "Update menu stock",
+        "description": "Sets menu.stock_qty to a number or null. Requires BRANCH_*:UPDATE.",
+        "parameters": [
+          { "name": "branchId", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "productId", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stock_qty": { "type": ["number", "null"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeMenuStock" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/users": {
+      "get": {
+        "summary": "Users list",
+        "description": "Returns a mock user collection. Requires USERS_*:LIST.",
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeUsersList" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/mock/users/{id}": {
+      "get": {
+        "summary": "User detail",
+        "description": "Returns a mock user. Requires USERS_*:GET.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeUserDetail" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      },
+      "post": {
+        "summary": "Update user",
+        "description": "Mocks user update acknowledgement. Requires USERS_*:UPDATE.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeUserMutation" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      },
+      "delete": {
+        "summary": "Delete user",
+        "description": "Mocks user deletion acknowledgement. Requires USERS_*:DELETE.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeUserMutation" }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "405": { "description": "Method not allowed" }
+        }
+      }
+    },
+    "/api/refresh-token": {
+      "post": {
+        "summary": "Rotate refresh token",
+        "description": "Issues a new access and refresh token pair. Used by the axios interceptor when a protected request returns 400/401.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": { "type": "string" }
+                },
+                "required": ["refreshToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business outcome",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EnvelopeRefreshToken" }
+              }
+            }
+          },
+          "400": { "description": "Bad request" },
+          "405": { "description": "Method not allowed" }
         }
       }
     }
@@ -95,18 +469,88 @@
           { "$ref": "#/components/schemas/ApiErr" }
         ]
       },
-      "EnvelopeAny": {
+      "EnvelopeDashboardSummary": {
         "oneOf": [
-          { "$ref": "#/components/schemas/ApiErr" },
-          {
-            "type": "object",
-            "properties": {
-              "code": { "type": "string" },
-              "message": { "type": "string" },
-              "body": {}
-            },
-            "required": ["code", "message", "body"]
-          }
+          { "$ref": "#/components/schemas/ApiOkDashboardSummary" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeDashboardLive": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkDashboardLive" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeOrdersList": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkOrdersList" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeOrderDetail": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkOrderDetail" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeOrderMutation": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkOrderMutation" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeBranchDetail": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkBranchDetail" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeBranchToggle": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkBranchToggle" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeBranchOpenHours": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkBranchOpenHours" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeMenuToggle": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkMenuToggle" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeMenuStock": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkMenuStock" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeUsersList": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkUsersList" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeUserDetail": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkUserDetail" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeUserMutation": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkUserMutation" },
+          { "$ref": "#/components/schemas/ApiErr" }
+        ]
+      },
+      "EnvelopeRefreshToken": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/ApiOkRefreshToken" },
+          { "$ref": "#/components/schemas/ApiErr" }
         ]
       },
       "ApiOkLogin": {
@@ -124,6 +568,180 @@
           "code": { "type": "string", "enum": ["OK"] },
           "message": { "type": "string" },
           "body": { "$ref": "#/components/schemas/AdminProfile" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkDashboardSummary": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/DashboardSummaryBody" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkDashboardLive": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/DashboardLiveBody" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkOrdersList": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/OrdersListBody" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkOrderDetail": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/OrderDetailBody" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkOrderMutation": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "integer" },
+              "status": { "type": "string" }
+            },
+            "required": ["id", "status"]
+          }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkBranchDetail": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/BranchDetailBody" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkBranchToggle": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": {
+            "type": "object",
+            "properties": {
+              "branchId": { "type": "integer" },
+              "is_force_closed": { "type": "boolean" }
+            },
+            "required": ["branchId", "is_force_closed"]
+          }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkBranchOpenHours": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": {
+            "type": "object",
+            "properties": {
+              "branchId": { "type": "integer" },
+              "open_hours": { "type": "object" }
+            },
+            "required": ["branchId", "open_hours"]
+          }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkMenuToggle": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "integer" },
+              "is_enabled": { "type": "boolean" }
+            },
+            "required": ["productId", "is_enabled"]
+          }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkMenuStock": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "integer" },
+              "stock_qty": { "type": ["number", "null"] }
+            },
+            "required": ["productId", "stock_qty"]
+          }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkUsersList": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/UsersListBody" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkUserDetail": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": { "$ref": "#/components/schemas/UserDetailBody" }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkUserMutation": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "integer" }
+            },
+            "required": ["id"]
+          }
+        },
+        "required": ["code", "message", "body"]
+      },
+      "ApiOkRefreshToken": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "enum": ["OK"] },
+          "message": { "type": "string" },
+          "body": {
+            "type": "object",
+            "properties": {
+              "accessToken": { "type": "string" },
+              "refreshToken": { "type": "string" }
+            },
+            "required": ["accessToken", "refreshToken"]
+          }
         },
         "required": ["code", "message", "body"]
       },
@@ -182,6 +800,129 @@
           }
         },
         "required": ["accessToken", "refreshToken", "admin"]
+      },
+      "DashboardSummaryBody": {
+        "type": "object",
+        "properties": {
+          "scope": { "type": "string", "enum": ["ALL", "COMPANY", "BRANCH"] },
+          "chart": { "type": "string", "enum": ["pie", "bar"] },
+          "data": { "$ref": "#/components/schemas/DashboardSummaryData" }
+        },
+        "required": ["scope", "chart", "data"]
+      },
+      "DashboardSummaryData": {
+        "type": "object",
+        "properties": {
+          "labels": { "type": "array", "items": { "type": "string" } },
+          "values": { "type": "array", "items": { "type": "number" } }
+        },
+        "required": ["labels", "values"]
+      },
+      "DashboardLiveBody": {
+        "type": "object",
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/LiveTxn" } }
+        },
+        "required": ["items"]
+      },
+      "LiveTxn": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "ts": { "type": "string", "format": "date-time" },
+          "scope": { "type": "string" },
+          "amount": { "type": "number" },
+          "companyId": { "type": "integer", "nullable": true },
+          "branchId": { "type": "integer", "nullable": true }
+        },
+        "required": ["id", "ts", "scope", "amount"]
+      },
+      "OrdersListBody": {
+        "type": "object",
+        "properties": {
+          "orders": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } }
+        },
+        "required": ["orders"]
+      },
+      "OrderDetailBody": {
+        "type": "object",
+        "properties": {
+          "order": { "$ref": "#/components/schemas/Order" }
+        },
+        "required": ["order"]
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "status": { "type": "string" },
+          "displayStatus": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "order_details": { "type": "object" },
+          "branch": { "type": "object" },
+          "txn": { "type": "object" }
+        },
+        "required": ["id"]
+      },
+      "BranchDetailBody": {
+        "type": "object",
+        "properties": {
+          "branch": { "$ref": "#/components/schemas/BranchInfo" },
+          "menu": { "type": "array", "items": { "$ref": "#/components/schemas/BranchMenuItem" } },
+          "page": { "type": "integer" },
+          "size": { "type": "integer" },
+          "total": { "type": "integer" }
+        },
+        "required": ["branch", "menu", "page", "size", "total"]
+      },
+      "BranchInfo": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "company_id": { "type": "integer" },
+          "name": { "type": "string" },
+          "address_line": { "type": "string" },
+          "lat": { "type": "number" },
+          "lng": { "type": "number" },
+          "is_force_closed": { "type": "boolean" },
+          "open_hours": { "type": "object" }
+        },
+        "required": ["id", "name", "is_force_closed"]
+      },
+      "BranchMenuItem": {
+        "type": "object",
+        "properties": {
+          "product_id": { "type": "integer" },
+          "name": { "type": "string" },
+          "price": { "type": "string" },
+          "is_enabled": { "type": "boolean" },
+          "stock_qty": { "type": ["number", "null"] }
+        },
+        "required": ["product_id", "name", "price", "is_enabled"]
+      },
+      "UsersListBody": {
+        "type": "object",
+        "properties": {
+          "users": { "type": "array", "items": { "$ref": "#/components/schemas/User" } }
+        },
+        "required": ["users"]
+      },
+      "UserDetailBody": {
+        "type": "object",
+        "properties": {
+          "user": { "$ref": "#/components/schemas/User" }
+        },
+        "required": ["user"]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        },
+        "required": ["id", "name", "email"]
       }
     }
   }

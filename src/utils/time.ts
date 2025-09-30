@@ -1,8 +1,10 @@
-import dayjs from “dayjs”;
-import utc from “dayjs/plugin/utc”;
-import tz from “dayjs/plugin/timezone”;
-dayjs.extend(utc); dayjs.extend(tz);
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
-export function toBangkokIso(input: string | number | Date) {
-return dayjs(input).tz(“Asia/Bangkok”).format(“YYYY-MM-DDTHH:mm:ss.SSSZ”);
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+export function toBangkokIso(input: string | number | Date): string {
+  return dayjs(input).tz("Asia/Bangkok").format("YYYY-MM-DDTHH:mm:ss.SSSZ");
 }

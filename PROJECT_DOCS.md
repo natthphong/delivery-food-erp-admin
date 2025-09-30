@@ -63,7 +63,7 @@ Examples
 ### Data table top bar
 
 * Left: title + count chip
-* Right: search, filters, “New”, export
+* Right: search, filters, "New", export
 
 ### Alert blocks
 
@@ -470,7 +470,7 @@ export default function AdminLogin() {
 ## 8) Roadmap after v0
 
 * RBAC guard (roles → route access)
-* “Tenants” switcher (across ERP vs Baan contexts)
+* "Tenants" switcher (across ERP vs Baan contexts)
 * Data grids (orders, branches, menus) read from **Baan Supabase**
 * Audit log (write to ERP)
 * Server-side pagination for big tables
@@ -479,7 +479,7 @@ export default function AdminLogin() {
 
 # PROMPT_GENERATOR_PATTERN.md
 
-> Paste this whole block to your codegen agent (e.g., “Codex”). It will scaffold the admin project exactly as above.
+> Paste this whole block to your codegen agent (e.g., "Codex"). It will scaffold the admin project exactly as above.
 
 ## System intent
 
@@ -517,7 +517,7 @@ You are generating a **Next.js 15 + TypeScript + Tailwind** Admin Console called
 
   * `src/pages/_app.tsx` – wrap Provider, import globals; simple route guard: if path ≠ `/login`, render only after hydration; if no tokens → redirect `/login`
   * `src/pages/login.tsx` – Tailwind login form (spec above)
-  * `src/pages/index.tsx` – protected “Dashboard” (placeholder), shows admin email + roles
+  * `src/pages/index.tsx` – protected "Dashboard" (placeholder), shows admin email + roles
 
 5. **APIs**
 
@@ -592,12 +592,26 @@ Permissions are aggregated per `object_code` with a sorted array of `action_code
 
 ### Mock APIs (permission-gated)
 
-All routes sit under `/api/mock/*` and pipe through `withAuth` + `withPermissions`:
+All routes live under `/api/mock/*` and pipe through `withAuth` → `withPermissions`. Every response uses the `{ code, message, body }` envelope and normalises timestamps to **Asia/Bangkok** via `toBangkokIso`.
 
-* `/api/mock/dashboard` → inspects `DASH_BROAD_*` permissions and returns scoped mock totals.
-* `/api/mock/orders` → honours `ORDER_*` actions. `GET ?id=` requires `GET`, collection lists need `LIST`, updates map to `UPDATE`, delete to `DELETE`.
-* `/api/mock/branch` → checks `BRANCH_*` equivalents.
-* `/api/mock/users` → checks `USERS_*` equivalents.
+* `GET /api/mock/dashboard/summary` – requires `DASH_BROAD_*:LIST` based on scope (`ALL|COMPANY|BRANCH`). Pulls pre-seeded JSON from `tbl_mock_key_value` and returns `{ labels, values }` for charts.
+* `GET /api/mock/dashboard/live` – same permissions as summary. Generates a synthetic live transaction (capped history of 100, returning the last 20) and filters by scope.
+* `GET /api/mock/orders` – requires any `ORDER_*:LIST`. Optional query params: `status`, `companyId`, `branchId`. Timestamps (order + txn) are coerced to Bangkok time.
+* `GET /api/mock/orders/{id}` – requires any `ORDER_*:GET`.
+* `POST /api/mock/orders/{id}/confirm` & `/reject` – require any `ORDER_*:UPDATE`, update stored status and `updated_at`.
+* `GET /api/mock/branch/{branchId}` – checks `BRANCH_*:GET`; branch roles restricted to id `1`. Reads KV payload and returns branch detail + menu.
+* `POST /api/mock/branch/{branchId}/toggle` – requires `BRANCH_*:UPDATE`; flips `is_force_closed`.
+* `POST /api/mock/branch/{branchId}/open-hours` – requires `BRANCH_*:UPDATE`; replaces `open_hours` with provided object.
+* `POST /api/mock/branch/{branchId}/menu/{productId}/toggle` – requires `BRANCH_*:UPDATE`; toggles `is_enabled`.
+* `POST /api/mock/branch/{branchId}/menu/{productId}/stock` – requires `BRANCH_*:UPDATE`; sets `stock_qty` to `null` or number.
+* `GET /api/mock/users` – requires `USERS_*:LIST`.
+* `GET /api/mock/users/{id}` – requires `USERS_*:GET`.
+* `POST /api/mock/users/{id}` – requires `USERS_*:UPDATE` (mock update acknowledgement).
+* `DELETE /api/mock/users/{id}` – requires `USERS_*:DELETE`.
+
+Outside the `/mock` namespace, `POST /api/refresh-token` rotates access/refresh pairs on 400/401 responses. The axios client queues concurrent refresh attempts and redirects to `/login` on failure.
+
+Supporting utility `src/repository/mockRepo.ts` abstracts the KV reads/writes (`getKV`, `setKV`, `appendLiveTxn`).
 
 ### Frontend gating & persistence
 
