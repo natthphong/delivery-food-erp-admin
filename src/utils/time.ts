@@ -1,14 +1,10 @@
-const BANGKOK_OFFSET_MINUTES = 7 * 60;
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
-export function toBangkokIso(input: string | number | Date) {
-  const date = input instanceof Date ? new Date(input.getTime()) : new Date(input);
-  if (Number.isNaN(date.getTime())) {
-    return new Date().toISOString().slice(0, 19) + "+07:00";
-  }
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
-  const utcMilliseconds = date.getTime() + date.getTimezoneOffset() * 60000;
-  const bangkokMilliseconds = utcMilliseconds + BANGKOK_OFFSET_MINUTES * 60000;
-  const bangkokDate = new Date(bangkokMilliseconds);
-  const iso = bangkokDate.toISOString();
-  return iso.slice(0, 19) + "+07:00";
+export function toBangkokIso(input: string | number | Date): string {
+  return dayjs(input).tz("Asia/Bangkok").format("YYYY-MM-DDTHH:mm:ss.SSSZ");
 }

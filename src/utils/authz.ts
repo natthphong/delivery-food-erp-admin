@@ -1,27 +1,28 @@
-import type { PermissionItem } from "@/types/auth";
+import type { PermissionItem } from "@/types/api";
 
-export function aggregatePermissions(rows: { permission: { object_code: string; action_code: string } | null }[]): PermissionItem[] {
+type RawPermissionRow = {
+  permission: {
+    object_code: string;
+    action_code: string;
+  };
+};
+
+export function aggregatePermissions(rows: RawPermissionRow[]): PermissionItem[] {
   const map = new Map<string, Set<string>>();
   for (const row of rows) {
-    const permission = row.permission;
-    if (!permission) continue;
-    if (!map.has(permission.object_code)) {
-      map.set(permission.object_code, new Set());
+    const { object_code, action_code } = row.permission;
+    if (!map.has(object_code)) {
+      map.set(object_code, new Set<string>());
     }
-    map.get(permission.object_code)!.add(permission.action_code);
+    map.get(object_code)!.add(action_code);
   }
-
-  return Array.from(map.entries()).map(([object_code, actions]) => ({
-    object_code,
+  return Array.from(map.entries()).map(([objectCode, actions]) => ({
+    object_code: objectCode,
     action_code: Array.from(actions).sort(),
   }));
 }
 
-export function hasPermission(perms: PermissionItem[] | null | undefined, objectCode: string, action: string): boolean {
-  if (!perms || perms.length === 0) {
-    return false;
-  }
-
-  const found = perms.find((item) => item.object_code === objectCode);
-  return !!found && found.action_code.includes(action);
+export function hasPermission(perms: PermissionItem[] | undefined, objectCode: string, action: string): boolean {
+  const matched = perms?.find((perm) => perm.object_code === objectCode);
+  return !!matched && matched.action_code.includes(action);
 }
